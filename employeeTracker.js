@@ -43,12 +43,13 @@ function start() {
       choices: [
         "View All Employees",
         "View All Employees By Department",
+        "View All Roles",
         "View All Employees By Manager",
         "Add Employee",
+        "Add Department",
         "Remove Employee",
         "Update Employee Role",
         "Update Employee Manager",
-        "View All Roles",
         "Add Role",
         "Remove Role"
       ]
@@ -61,11 +62,17 @@ function start() {
         case "View All Employees By Department":
           employeeDepartment();
           break;
+        case "View All Roles":
+          viewRoles();
+          break;
         case "View All Employees By Manager":
           employeeManager();
           break;
         case "Add Employee":
           addEmployee();
+          break;
+        case "Add Department":
+          addDepartment();
           break;
         case "Remove Employee":
           removeEmployee();
@@ -75,9 +82,6 @@ function start() {
           break;
         case "Update Employee Manager":
           updateManager();
-          break;
-        case "View All Roles":
-          viewRoles();
           break;
         case "Add Role":
           addRole();
@@ -90,6 +94,7 @@ function start() {
       }
     });
 }
+//view all employees
 function employeeView() {
   connection.query("SELECT * FROM employee", (err, results) => {
     if (err) throw err;
@@ -97,6 +102,7 @@ function employeeView() {
     start();
   });
 }
+//view by department
 function employeeDepartment() {
   connection.query(
     `
@@ -120,10 +126,20 @@ function employeeDepartment() {
     }
   );
 }
-function employeeManager(manager_id) {
+//View all roles
+function viewRoles() {
   connection.query(
-    "SELECT * FROM employee WHERE manager_id = ?",
-    { manager_id },
+    `
+   SELECT
+    employee.id,
+    employee.first_name,
+    employee.last_name,
+    role.title AS role
+  FROM
+    employee
+  LEFT JOIN
+    role ON employee.role_id
+`,
     (err, results) => {
       if (err) throw err;
       console.table(results);
@@ -131,44 +147,252 @@ function employeeManager(manager_id) {
     }
   );
 }
-function addEmployee() {}
+// view by manager
+// function employeeManager() {
+//   connection.query(
+//     `
+//   SELECT
+//     employee.id
+//     employee.first_name,
+//     employee.last_name,
+//     employee.manager_id,
+//     role.title AS role
+//   FROM
+//     employee
+//   LEFT JOIN
+//   role ON employee.role_id
+//     `,
+//     (err, results) => {
+//       if (err) throw err;
+//       console.table(results);
+//       start();
+//     }
+//   );
+// }
 
-function updateProduct() {
-  console.log("Updating all Rocky Road quantities...\n");
-  const query = connection.query(
-    "UPDATE products SET ? WHERE ?",
-    [
+//Add Employee
+function addEmployee() {
+  inquirer
+    .prompt([
       {
-        quantity: 100
+        name: "firstName",
+        type: "input",
+        message: "What is the first name of the employee you would like to add?"
       },
       {
-        flavor: "Rocky Road"
+        name: "lastName",
+        type: "input",
+        message: "What is the last name of the employee you would like to add?"
+      },
+      {
+        name: "role",
+        type: "rawlist",
+        choices: [
+          "Lead Engineer",
+          "Base Engineer",
+          "Junior Engineer",
+          "Lead Sales",
+          "Base Sales",
+          "Junior Sales",
+          "Lead Management",
+          "Base Management",
+          "Junior Management"
+        ],
+        message: "What is their role?"
+      },
+      {
+        name: "manager",
+        type: "input",
+        message: "Who is the employee's manager?"
       }
-    ],
-    (err, res) => {
-      if (err) throw err;
-      console.log(`${res.affectedRows} products updated!\n`);
-      // Call deleteProduct AFTER the UPDATE completes
-      deleteProduct();
-    }
-  );
-
-  // logs the actual query being run
-  console.log(query.sql);
+    ])
+    .then(answer => {
+      connection.query(
+        `
+  SELECT  
+    employee.id,
+    employee.first_name, 
+    employee.last_name, 
+    role.title,
+    role.title AS role
+  FROM
+   employee
+   LEFT JOIN
+   role ON employee.role_id = role.id
+        `,
+        "INSERT INTO employee SET ?",
+        {
+          first_name: answer.firstName,
+          last_name: answer.lastName,
+          manager_id: answer.manager
+        },
+        "INSERT INTO role SET ?",
+        {
+          title: answer.role
+        },
+        err => {
+          if (err) throw err;
+          console.log("Employee successfully added!");
+          start();
+        }
+      );
+    });
 }
-
-function deleteProduct() {
-  console.log("Deleting all strawberry icecream because it's gross...\n");
+//Add role
+function addRole() {
+  inquirer
+    .prompt([
+      {
+        name: "addRole",
+        type: "input",
+        message: "What is the role you would like to add?"
+      },
+      {
+        name: "salary",
+        type: "input",
+        message: "What is the role you would like to add?",
+        validate: value => !isNaN(value)
+      },
+      {
+        name: "department",
+        type: "rawlist",
+        choices: ["Engineering", "Sales", "Managemnt"],
+        message: "What department are they in?"
+      }
+    ])
+    .then(answer => {
+      connection.query(
+        `
+    SELECT  
+      role.id,
+      role.title, 
+      role.salary, 
+      role.department_id,
+      department.name,
+      role.title AS role
+    FROM
+     role
+    LEFT JOIN
+     department ON role.id = department.id
+          `,
+        "INSERT INTO role SET ?",
+        {
+          title: answer.addRole,
+          salary: answer.salary,
+          name: answer.department
+        },
+        err => {
+          if (err) throw err;
+          console.log("Role successfully added!");
+          start();
+        }
+      );
+    });
+}
+//Add Department
+function addDepartment() {
+  inquirer
+    .prompt([
+      {
+        name: "department",
+        type: "input",
+        message: "What department would you like to add?"
+      }
+    ])
+    .then(answer => {
+      connection.query(
+        `
+    SELECT  
+      department.name,
+          `,
+        "INSERT INTO department SET ?",
+        {
+          name: answer.department
+        },
+        err => {
+          if (err) throw err;
+          console.log("Department successfully added!");
+          start();
+        }
+      );
+    });
+}
+//Update employee role
+function updateRole() {
   connection.query(
-    "DELETE FROM products WHERE ?",
-    {
-      flavor: "strawberry"
-    },
-    (err, res) => {
+    `
+  SELECT
+    employee.id,
+    employee.first_name,
+    employee.last_name,
+    role.title AS role
+  FROM
+    employee
+    LEFT JOIN
+    role ON employee.role_id = role.id
+  LEFT JOIN
+    department ON role.department_id = department.id;
+  `,
+    (err, results) => {
       if (err) throw err;
-      console.log(`${res.affectedRows} products deleted!\n`);
-      // Call readProducts AFTER the DELETE completes
-      readProducts();
+      inquirer
+        .prompt([
+          {
+            name: "choice",
+            type: "rawlist",
+            choices: () => results.map(result => result.last_name),
+            message: "By last name, whose role would you like to change?"
+          },
+          {
+            name: "role-change",
+            type: "rawlist",
+            choices: [
+              "Lead Engineer",
+              "Base Engineer",
+              "Junior Engineer",
+              "Lead Sales",
+              "Base Sales",
+              "Junior Sales",
+              "Lead Management",
+              "Base Management",
+              "Junior Management"
+            ],
+            message: "Select their updated role:"
+          }
+        ])
+        .then(answer => {
+          let chosenRole = results.filter(
+            result => result.last_name === answer.choice
+          );
+          connection.query(
+            "UPDATE employee SET ? WHERE ?",
+            [
+              {
+                role: chosenRole.role
+              }
+            ],
+            error => {
+              if (error) throw err;
+              console.log("Employee role changed!");
+              start();
+            }
+          );
+        });
     }
   );
 }
+//Remove Employee
+// function removeEmployee() {
+//   connection.query(
+//     "DELETE FROM employee WHERE ?",
+//     {
+//
+//     },
+//     (err, res) => {
+//       if (err) throw err;
+//       console.log(`${res.affectedRows} products deleted!\n`);
+//       // Call readProducts AFTER the DELETE completes
+//       readProducts();
+//     }
+//   );
+// }
