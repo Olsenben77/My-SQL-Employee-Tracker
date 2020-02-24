@@ -38,5 +38,8 @@ I would like to include more working features on the Main Menu such as removing 
 ## References
 
 https://www.mysqltutorial.org/mysql-decimal/
+
 https://www.w3schools.com/sql/sql_join.asp
-https://medium.com/poka-techblog/simplify-your-javascript-use-map-reduce-and-filter-bd02c593cc2d
+
+https://medium.com/poka-techblog/
+simplify-your-javascript-use-map-reduce-and-filter-bd02c593cc2d
